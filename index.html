@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K & B — Controle de Relicários</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #0c0c0e;
+    --ink-2: #18181b;
+    --ink-3: #222226;
+    --line: rgba(212,175,55,0.22);
+    --gold: #d4af37;
+    --rose: #a8a49c;
+    --ivory: #f5f1e6;
+    --muted: #8f8b85;
+    --danger: #a8a49c;
+    --good: #d4af37;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--ink);
+    color: var(--ivory);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap{ max-width: 900px; margin: 0 auto; padding: 48px 24px 100px; }
+
+  /* header */
+  .header{
+    text-align: center;
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 36px;
+    position: relative;
+  }
+  .fullscreen-btn{
+    position: absolute; top: 0; right: 0;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--ink-2); border: 1px solid var(--line); color: var(--muted);
+    font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 500;
+    padding: 8px 14px; border-radius: 20px; cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .fullscreen-btn:hover{ color: var(--good); border-color: var(--good); }
+  .monogram{
+    font-family: 'Fraunces', serif; font-weight: 500; font-size: 14px;
+    letter-spacing: 0.3em; text-transform: uppercase; color: var(--good); margin-bottom: 16px;
+  }
+  .monogram .amp{ color: var(--ivory); font-style: italic; margin: 0 8px; }
+  h1{
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: clamp(28px, 4.6vw, 42px); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.01em;
+  }
+  .subtitle{ color: var(--muted); font-size: 14.5px; max-width: 480px; margin: 0 auto; line-height: 1.6; }
+
+  /* cards */
+  .cards{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 40px; }
+  .card{ background: var(--ink-2); border: 1px solid var(--line); border-radius: 14px; padding: 18px 16px; }
+  .card .k{ font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .card .v{ font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: var(--ivory); letter-spacing: -0.01em; }
+  .card.good .v{ color: var(--good); }
+  .card.rest .v{ color: var(--rose); }
+
+  /* sections */
+  .section{ margin-bottom: 36px; }
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom: 16px; }
+  .section-title{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 20px; }
+  .section-hint{ font-size: 12.5px; color: var(--muted); }
+
+  /* forms */
+  .form-card{ background: var(--ink-2); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+  .form-row{ display: grid; gap: 12px; align-items: end; }
+  .form-row.models{ grid-template-columns: 2fr 1fr 1fr auto; }
+  .form-row.orders{ grid-template-columns: 2fr 2fr 0.9fr 1fr 1fr auto; }
+  .field label{ display:block; font-size: 11px; letter-spacing:0.06em; text-transform:uppercase; color: var(--muted); margin-bottom: 7px; }
+  .field select, .field input{
+    width: 100%; background: var(--ink-3); border: 1px solid var(--line); border-radius: 9px;
+    padding: 11px 12px; color: var(--ivory); font-family: 'Inter', sans-serif; font-size: 14px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .field select:focus, .field input:focus{ border-color: var(--gold); }
+  .field input::placeholder{ color: #6b6862; }
+  .btn{ border: none; border-radius: 9px; padding: 11px 18px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+  .btn:active{ transform: scale(0.98); }
+  .btn-primary{ background: var(--gold); color: #0c0c0e; }
+  .btn-primary:hover{ opacity: 0.9; }
+  .btn-primary:disabled{ opacity: 0.4; cursor: not-allowed; }
+
+  /* stock list */
+  .stock-list{ display:flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+  .stock-item{
+    display:flex; align-items:center; justify-content: space-between; gap: 12px;
+    background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+  }
+  .stock-left{ display:flex; flex-direction:column; gap: 3px; min-width: 0; }
+  .stock-name{ font-size: 14.5px; font-weight: 600; color: var(--ivory); }
+  .stock-price{ font-size: 12px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+  .stock-right{ display:flex; align-items:center; gap: 14px; flex-shrink:0; }
+  .stock-qty{ font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 15px; }
+  .stock-qty.zero{ color: var(--rose); }
+  .stock-qty.ok{ color: var(--good); }
+  .stock-add{ display:flex; align-items:center; gap: 6px; }
+  .stock-add input{
+    width: 56px; background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px;
+    padding: 7px 8px; font-size: 13px; color: var(--ivory); text-align:center;
+  }
+  .mini-btn{
+    background: var(--ink-3); border: 1px solid var(--line); color: var(--gold);
+    border-radius: 8px; padding: 7px 10px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .mini-btn:hover{ background: var(--gold); color: #0c0c0e; }
+  .icon-btn{ background:none; border:none; color: var(--muted); cursor:pointer; font-size: 16px; padding: 4px; }
+  .icon-btn:hover{ color: var(--gold); }
+
+  /* orders list */
+  .list{ display: flex; flex-direction: column; gap: 8px; }
+  .item{
+    display:flex; align-items:center; justify-content: space-between; gap: 12px;
+    background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+  }
+  .item-left{ display:flex; flex-direction:column; gap: 3px; min-width: 0; }
+  .item-buyer{ font-size: 14.5px; font-weight: 600; color: var(--ivory); }
+  .item-meta{ font-size: 12px; color: var(--muted); }
+  .item-right{ display:flex; align-items:center; gap: 12px; flex-shrink:0; }
+  .item-price{ font-family: 'IBM Plex Mono', monospace; font-weight:600; font-size: 14px; }
+  .badge{
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.03em; padding: 5px 11px; border-radius: 20px;
+    cursor: pointer; border: none; text-transform: uppercase;
+  }
+  .badge.paid{ background: rgba(212,175,55,0.18); color: var(--gold); }
+  .badge.unpaid{ background: rgba(168,164,156,0.18); color: var(--muted); }
+  .empty{ text-align:center; padding: 26px 20px; color: var(--muted); font-size: 13.5px; border: 1px dashed var(--line); border-radius: 12px; }
+
+  /* settings / danger */
+  .settings-toggle{ display:inline-flex; align-items:center; gap:6px; background:none; border:none; color: var(--muted); font-size: 12.5px; cursor:pointer; padding: 0; }
+  .settings-toggle:hover{ color: var(--good); }
+  .settings-box{ display:none; margin-top: 14px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  .settings-box.open{ display:block; }
+  .danger-zone{ display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .danger-title{ font-size: 13.5px; font-weight: 600; color: var(--ivory); margin-bottom: 4px; }
+  .danger-sub{ font-size: 12px; color: var(--muted); line-height: 1.5; max-width: 420px; }
+  .btn-danger{ background: transparent; border: 1px solid var(--muted); color: var(--muted); flex-shrink: 0; }
+  .btn-danger:hover{ background: var(--muted); color: #0c0c0e; }
+
+  .footer-note{ text-align:center; color: var(--muted); font-size: 12px; margin-top: 44px; line-height: 1.7; }
+
+  @media (max-width: 700px){
+    .fullscreen-btn{ position: static; display: inline-flex; margin-bottom: 16px; }
+    .cards{ grid-template-columns: repeat(2, 1fr); }
+    .form-row.models, .form-row.orders{ grid-template-columns: 1fr; }
+    .danger-zone{ flex-direction: column; align-items: stretch; text-align: left; }
+    .item, .stock-item{ flex-direction: column; align-items: flex-start; }
+    .item-right, .stock-right{ width: 100%; justify-content: space-between; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <button class="fullscreen-btn" id="fullscreenBtn">⤢ Tela cheia</button>
+    <div class="monogram">K<span class="amp">&amp;</span>B</div>
+    <h1>Controle de<br>Relicários</h1>
+    <p class="subtitle">Estoque e pedidos das joias do casamento — tudo salvo automaticamente, sem precisar de planilha.</p>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="k">Em estoque</div>
+      <div class="v" id="cardStock">—</div>
+    </div>
+    <div class="card">
+      <div class="k">Pedidos feitos</div>
+      <div class="v" id="cardOrders">—</div>
+    </div>
+    <div class="card good">
+      <div class="k">Já recebido</div>
+      <div class="v" id="cardReceived">—</div>
+    </div>
+    <div class="card rest">
+      <div class="k">A receber</div>
+      <div class="v" id="cardPending">—</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title">Estoque de relicários</div>
+      <div class="section-hint" id="modelsHint">0 modelos</div>
+    </div>
+    <div class="form-card">
+      <div class="form-row models">
+        <div class="field">
+          <label for="modelNameInput">Nome do relicário</label>
+          <input id="modelNameInput" type="text" placeholder="Ex: Relicário coração dourado" maxlength="50">
+        </div>
+        <div class="field">
+          <label for="modelPriceInput">Preço (R$)</label>
+          <input id="modelPriceInput" type="number" step="0.01" min="0" placeholder="0,00">
+        </div>
+        <div class="field">
+          <label for="modelQtyInput">Quantidade</label>
+          <input id="modelQtyInput" type="number" step="1" min="1" placeholder="10">
+        </div>
+        <button class="btn btn-primary" id="addModelBtn">Adicionar</button>
+      </div>
+    </div>
+    <div class="stock-list" id="stockList"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title">Registrar pedido</div>
+      <div class="section-hint">tira automaticamente do estoque</div>
+    </div>
+    <div class="form-card">
+      <div class="form-row orders">
+        <div class="field">
+          <label for="buyerInput">Nome de quem pediu</label>
+          <input id="buyerInput" type="text" placeholder="Ex: Maria Silva" maxlength="50">
+        </div>
+        <div class="field">
+          <label for="orderModelSelect">Relicário escolhido</label>
+          <select id="orderModelSelect"></select>
+        </div>
+        <div class="field">
+          <label for="orderQtyInput">Qtd.</label>
+          <input id="orderQtyInput" type="number" step="1" min="1" value="1">
+        </div>
+        <div class="field">
+          <label for="orderPriceInput">Preço (R$)</label>
+          <input id="orderPriceInput" type="number" step="0.01" min="0">
+        </div>
+        <div class="field">
+          <label for="orderPaidSelect">Pagamento</label>
+          <select id="orderPaidSelect">
+            <option value="unpaid">Ainda não pagou</option>
+            <option value="paid">Já pagou</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="addOrderBtn">Registrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title">Pedidos</div>
+      <div class="section-hint" id="ordersHint">0 pedidos</div>
+    </div>
+    <div class="list" id="ordersList"></div>
+  </div>
+
+  <div class="section">
+    <button class="settings-toggle" id="settingsToggle">⚙ Opções avançadas</button>
+    <div class="settings-box" id="settingsBox">
+      <div class="danger-zone">
+        <div class="danger-text">
+          <div class="danger-title">Apagar tudo</div>
+          <div class="danger-sub">Remove todos os modelos de relicário, todo o estoque e todos os pedidos registrados. Não pode ser desfeito.</div>
+        </div>
+        <button class="btn btn-danger" id="resetAllBtn">Apagar tudo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Feito com carinho para K &amp; B · os dados ficam salvos automaticamente neste dispositivo/artefato.
+  </div>
+
+</div>
+
+<script>
+(function(){
+  let models = [];   // {id, name, price, qty}
+  let orders = [];   // {id, modelId, modelName, price, qty, buyer, paid, date}
+
+  const fmt = (n) => new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(n || 0);
+  const uid = (p) => p + Date.now() + Math.floor(Math.random()*1000);
+
+  const els = {
+    cardStock: document.getElementById('cardStock'),
+    cardOrders: document.getElementById('cardOrders'),
+    cardReceived: document.getElementById('cardReceived'),
+    cardPending: document.getElementById('cardPending'),
+    modelsHint: document.getElementById('modelsHint'),
+    stockList: document.getElementById('stockList'),
+    modelNameInput: document.getElementById('modelNameInput'),
+    modelPriceInput: document.getElementById('modelPriceInput'),
+    modelQtyInput: document.getElementById('modelQtyInput'),
+    addModelBtn: document.getElementById('addModelBtn'),
+    buyerInput: document.getElementById('buyerInput'),
+    orderModelSelect: document.getElementById('orderModelSelect'),
+    orderQtyInput: document.getElementById('orderQtyInput'),
+    orderPriceInput: document.getElementById('orderPriceInput'),
+    orderPaidSelect: document.getElementById('orderPaidSelect'),
+    addOrderBtn: document.getElementById('addOrderBtn'),
+    ordersHint: document.getElementById('ordersHint'),
+    ordersList: document.getElementById('ordersList'),
+    settingsToggle: document.getElementById('settingsToggle'),
+    settingsBox: document.getElementById('settingsBox'),
+    resetAllBtn: document.getElementById('resetAllBtn'),
+    fullscreenBtn: document.getElementById('fullscreenBtn'),
+  };
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function formatDate(dateStr){
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  function render(){
+    const totalStock = models.reduce((s,m)=> s + m.qty, 0);
+    const totalOrders = orders.reduce((s,o)=> s + o.qty, 0);
+    const received = orders.filter(o=>o.paid).reduce((s,o)=> s + o.price*o.qty, 0);
+    const pending = orders.filter(o=>!o.paid).reduce((s,o)=> s + o.price*o.qty, 0);
+
+    els.cardStock.textContent = totalStock;
+    els.cardOrders.textContent = totalOrders;
+    els.cardReceived.textContent = fmt(received);
+    els.cardPending.textContent = fmt(pending);
+
+    // stock list
+    els.modelsHint.textContent = models.length + (models.length === 1 ? ' modelo' : ' modelos');
+    if(models.length === 0){
+      els.stockList.innerHTML = '<div class="empty">Nenhum relicário cadastrado ainda. Adicione o primeiro modelo acima.</div>';
+    } else {
+      els.stockList.innerHTML = models.map(m => `
+        <div class="stock-item" data-id="${m.id}">
+          <div class="stock-left">
+            <div class="stock-name">${escapeHtml(m.name)}</div>
+            <div class="stock-price">${fmt(m.price)} cada</div>
+          </div>
+          <div class="stock-right">
+            <div class="stock-qty ${m.qty > 0 ? 'ok' : 'zero'}">${m.qty > 0 ? m.qty + ' em estoque' : 'esgotado'}</div>
+            <div class="stock-add">
+              <input type="number" min="1" value="1" data-addqty="${m.id}">
+              <button class="mini-btn" data-addbtn="${m.id}">+ estoque</button>
+            </div>
+            <button class="icon-btn" data-delmodel="${m.id}" title="Remover modelo">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // order model select
+    const availableModels = models.filter(m => m.qty > 0);
+    if(availableModels.length === 0){
+      els.orderModelSelect.innerHTML = '<option value="">Nenhum relicário disponível</option>';
+      els.addOrderBtn.disabled = true;
+    } else {
+      els.orderModelSelect.innerHTML = availableModels.map(m =>
+        `<option value="${m.id}">${escapeHtml(m.name)} (estoque: ${m.qty}) — ${fmt(m.price)}</option>`
+      ).join('');
+      els.addOrderBtn.disabled = false;
+      syncOrderPriceAndMax();
+    }
+
+    // orders list
+    els.ordersHint.textContent = orders.length + (orders.length === 1 ? ' pedido' : ' pedidos');
+    if(orders.length === 0){
+      els.ordersList.innerHTML = '<div class="empty">Nenhum pedido registrado ainda.</div>';
+    } else {
+      const sorted = [...orders].sort((a,b)=> new Date(b.date) - new Date(a.date));
+      els.ordersList.innerHTML = sorted.map(o => `
+        <div class="item" data-id="${o.id}">
+          <div class="item-left">
+            <div class="item-buyer">${escapeHtml(o.buyer)}</div>
+            <div class="item-meta">${escapeHtml(o.modelName)} · qtd. ${o.qty} · ${formatDate(o.date)}</div>
+          </div>
+          <div class="item-right">
+            <div class="item-price">${fmt(o.price * o.qty)}</div>
+            <button class="badge ${o.paid ? 'paid' : 'unpaid'}" data-toggle="${o.id}">${o.paid ? 'Pago' : 'Não pago'}</button>
+            <button class="icon-btn" data-delorder="${o.id}" title="Remover pedido">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  function syncOrderPriceAndMax(){
+    const modelId = els.orderModelSelect.value;
+    const model = models.find(m => m.id === modelId);
+    if(model){
+      els.orderPriceInput.value = model.price;
+      els.orderQtyInput.max = model.qty;
+      if(parseInt(els.orderQtyInput.value) > model.qty) els.orderQtyInput.value = model.qty;
+    }
+  }
+
+  async function loadData(){
+    try {
+      const mRes = await window.storage.get('kb-reliquiarios:models', false);
+      if(mRes && mRes.value) models = JSON.parse(mRes.value);
+    } catch(e){ models = []; }
+    try {
+      const oRes = await window.storage.get('kb-reliquiarios:orders', false);
+      if(oRes && oRes.value) orders = JSON.parse(oRes.value);
+    } catch(e){ orders = []; }
+    render();
+  }
+
+  async function saveModels(){
+    try { await window.storage.set('kb-reliquiarios:models', JSON.stringify(models), false); }
+    catch(e){ console.error('Falha ao salvar modelos', e); }
+  }
+  async function saveOrders(){
+    try { await window.storage.set('kb-reliquiarios:orders', JSON.stringify(orders), false); }
+    catch(e){ console.error('Falha ao salvar pedidos', e); }
+  }
+
+  // add model
+  els.addModelBtn.addEventListener('click', async () => {
+    const name = els.modelNameInput.value.trim();
+    const price = parseFloat(els.modelPriceInput.value);
+    const qty = parseInt(els.modelQtyInput.value);
+    if(!name){ els.modelNameInput.focus(); return; }
+    if(isNaN(price) || price < 0){ els.modelPriceInput.focus(); return; }
+    if(!qty || qty <= 0){ els.modelQtyInput.focus(); return; }
+
+    models.push({ id: uid('m'), name, price, qty });
+    els.modelNameInput.value = '';
+    els.modelPriceInput.value = '';
+    els.modelQtyInput.value = '';
+    render();
+    await saveModels();
+  });
+
+  // stock list clicks (add stock / delete model)
+  els.stockList.addEventListener('click', async (e) => {
+    const addId = e.target.getAttribute('data-addbtn');
+    const delId = e.target.getAttribute('data-delmodel');
+    if(addId){
+      const input = els.stockList.querySelector(`input[data-addqty="${addId}"]`);
+      const amount = parseInt(input.value);
+      if(!amount || amount <= 0) return;
+      const model = models.find(m => m.id === addId);
+      if(model){ model.qty += amount; render(); await saveModels(); }
+    }
+    if(delId){
+      if(!confirm('Remover este modelo do estoque? Os pedidos já feitos continuam no histórico.')) return;
+      models = models.filter(m => m.id !== delId);
+      render();
+      await saveModels();
+    }
+  });
+
+  els.orderModelSelect.addEventListener('change', syncOrderPriceAndMax);
+
+  // add order
+  els.addOrderBtn.addEventListener('click', async () => {
+    const buyer = els.buyerInput.value.trim();
+    const modelId = els.orderModelSelect.value;
+    const qty = parseInt(els.orderQtyInput.value);
+    const price = parseFloat(els.orderPriceInput.value);
+    const paid = els.orderPaidSelect.value === 'paid';
+
+    if(!buyer){ els.buyerInput.focus(); return; }
+    const model = models.find(m => m.id === modelId);
+    if(!model){ return; }
+    if(!qty || qty <= 0){ els.orderQtyInput.focus(); return; }
+    if(qty > model.qty){ alert('Não há estoque suficiente desse relicário.'); return; }
+    if(isNaN(price) || price < 0){ els.orderPriceInput.focus(); return; }
+
+    model.qty -= qty;
+    orders.push({
+      id: uid('o'),
+      modelId: model.id,
+      modelName: model.name,
+      price, qty, buyer, paid,
+      date: new Date().toISOString().slice(0,10)
+    });
+
+    els.buyerInput.value = '';
+    els.orderQtyInput.value = '1';
+    render();
+    await saveModels();
+    await saveOrders();
+  });
+
+  // orders list clicks (toggle paid / delete)
+  els.ordersList.addEventListener('click', async (e) => {
+    const toggleId = e.target.getAttribute('data-toggle');
+    const delId = e.target.getAttribute('data-delorder');
+    if(toggleId){
+      const order = orders.find(o => o.id === toggleId);
+      if(order){ order.paid = !order.paid; render(); await saveOrders(); }
+    }
+    if(delId){
+      if(!confirm('Remover este pedido? O estoque será devolvido automaticamente.')) return;
+      const order = orders.find(o => o.id === delId);
+      if(order){
+        const model = models.find(m => m.id === order.modelId);
+        if(model) model.qty += order.qty;
+        orders = orders.filter(o => o.id !== delId);
+        render();
+        await saveModels();
+        await saveOrders();
+      }
+    }
+  });
+
+  [els.modelNameInput, els.modelPriceInput, els.modelQtyInput].forEach(input => {
+    input.addEventListener('keydown', (e) => { if(e.key === 'Enter') els.addModelBtn.click(); });
+  });
+  [els.buyerInput, els.orderQtyInput, els.orderPriceInput].forEach(input => {
+    input.addEventListener('keydown', (e) => { if(e.key === 'Enter') els.addOrderBtn.click(); });
+  });
+
+  els.settingsToggle.addEventListener('click', () => {
+    els.settingsBox.classList.toggle('open');
+  });
+
+  els.resetAllBtn.addEventListener('click', async () => {
+    const c1 = confirm('Isso vai apagar todos os modelos, todo o estoque e todos os pedidos. Tem certeza?');
+    if(!c1) return;
+    const c2 = confirm('Confirmando de novo: essa ação não pode ser desfeita. Apagar tudo mesmo?');
+    if(!c2) return;
+    models = [];
+    orders = [];
+    render();
+    await saveModels();
+    await saveOrders();
+    els.settingsBox.classList.remove('open');
+  });
+
+  // fullscreen
+  els.fullscreenBtn.addEventListener('click', () => {
+    const el = document.documentElement;
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    if(!isFullscreen){
+      if(el.requestFullscreen) el.requestFullscreen();
+      else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else alert('Seu navegador não permite abrir em tela cheia por aqui. Tente pelo menu do navegador.');
+    } else {
+      if(document.exitFullscreen) document.exitFullscreen();
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+  });
+  document.addEventListener('fullscreenchange', updateFullscreenLabel);
+  document.addEventListener('webkitfullscreenchange', updateFullscreenLabel);
+  function updateFullscreenLabel(){
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    els.fullscreenBtn.textContent = isFullscreen ? '⤡ Sair da tela cheia' : '⤢ Tela cheia';
+  }
+
+  loadData();
+})();
+</script>
+</body>
+</html>
