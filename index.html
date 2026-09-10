@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>K & B — Controle de Relicários</title>
+<title>Velora — Controle de Relicários</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -48,13 +48,13 @@
   }
   .fullscreen-btn:hover{ color: var(--good); border-color: var(--good); }
   .monogram{
-    font-family: 'Fraunces', serif; font-weight: 500; font-size: 14px;
-    letter-spacing: 0.3em; text-transform: uppercase; color: var(--good); margin-bottom: 16px;
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: clamp(32px, 6vw, 52px);
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--good); margin-bottom: 14px;
   }
   .monogram .amp{ color: var(--ivory); font-style: italic; margin: 0 8px; }
   h1{
-    font-family: 'Fraunces', serif; font-weight: 600;
-    font-size: clamp(28px, 4.6vw, 42px); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.01em;
+    font-family: 'Fraunces', serif; font-weight: 500;
+    font-size: clamp(18px, 2.6vw, 24px); line-height: 1.3; margin: 0 0 10px; letter-spacing: -0.005em; color: var(--muted);
   }
   .subtitle{ color: var(--muted); font-size: 14.5px; max-width: 480px; margin: 0 auto; line-height: 1.6; }
 
@@ -149,7 +149,39 @@
 
   .footer-note{ text-align:center; color: var(--muted); font-size: 12px; margin-top: 44px; line-height: 1.7; }
 
+  /* views / navigation */
+  .view{ display: none; }
+  .view.active{ display: block; animation: fadein 0.25s ease; }
+  @keyframes fadein{ from{ opacity:0; transform: translateY(4px); } to{ opacity:1; transform: translateY(0); } }
+
+  .nav-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .nav-card{
+    display:flex; align-items:center; gap: 14px; text-align:left;
+    background: var(--ink-2); border: 1px solid var(--line); border-radius: 16px;
+    padding: 20px; cursor: pointer; font-family: 'Inter', sans-serif; color: var(--ivory);
+    transition: border-color 0.15s, transform 0.1s, background 0.15s;
+  }
+  .nav-card:hover{ border-color: var(--gold); background: var(--ink-3); }
+  .nav-card:active{ transform: scale(0.98); }
+  .nav-icon{
+    flex-shrink:0; width: 46px; height: 46px; border-radius: 12px;
+    background: rgba(212,175,55,0.12); color: var(--gold);
+    display:flex; align-items:center; justify-content:center; font-size: 20px;
+  }
+  .nav-text{ min-width:0; }
+  .nav-title{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 16.5px; margin-bottom: 3px; }
+  .nav-sub{ font-size: 12px; color: var(--muted); }
+  .nav-arrow{ margin-left: auto; color: var(--muted); font-size: 18px; flex-shrink: 0; }
+
+  .back-btn{
+    display:inline-flex; align-items:center; gap: 6px; background:none; border:none;
+    color: var(--muted); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    cursor:pointer; padding: 0; margin-bottom: 18px;
+  }
+  .back-btn:hover{ color: var(--good); }
+
   @media (max-width: 700px){
+    .nav-grid{ grid-template-columns: 1fr; }
     .fullscreen-btn{ position: static; display: inline-flex; margin-bottom: 16px; }
     .cards{ grid-template-columns: repeat(2, 1fr); }
     .form-row.models, .form-row.orders{ grid-template-columns: 1fr; }
@@ -164,7 +196,7 @@
 
   <div class="header">
     <button class="fullscreen-btn" id="fullscreenBtn">⤢ Tela cheia</button>
-    <div class="monogram">K<span class="amp">&amp;</span>B</div>
+    <div class="monogram">VELORA</div>
     <h1>Controle de<br>Relicários</h1>
     <p class="subtitle">Estoque e pedidos das joias do casamento — tudo salvo automaticamente, sem precisar de planilha.</p>
   </div>
@@ -188,89 +220,145 @@
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-head">
-      <div class="section-title">Estoque de relicários</div>
-      <div class="section-hint" id="modelsHint">0 modelos</div>
+  <!-- HOME: navegação -->
+  <div class="view active" id="homeView">
+    <div class="nav-grid">
+      <button class="nav-card" data-nav="stockView">
+        <div class="nav-icon">💍</div>
+        <div class="nav-text">
+          <div class="nav-title">Estoque</div>
+          <div class="nav-sub" id="navModelsHint">0 modelos</div>
+        </div>
+        <div class="nav-arrow">›</div>
+      </button>
+      <button class="nav-card" data-nav="orderView">
+        <div class="nav-icon">✎</div>
+        <div class="nav-text">
+          <div class="nav-title">Registrar pedido</div>
+          <div class="nav-sub">tira do estoque na hora</div>
+        </div>
+        <div class="nav-arrow">›</div>
+      </button>
+      <button class="nav-card" data-nav="ordersListView">
+        <div class="nav-icon">📋</div>
+        <div class="nav-text">
+          <div class="nav-title">Pedidos</div>
+          <div class="nav-sub" id="navOrdersHint">0 pedidos</div>
+        </div>
+        <div class="nav-arrow">›</div>
+      </button>
+      <button class="nav-card" data-nav="settingsView">
+        <div class="nav-icon">⚙</div>
+        <div class="nav-text">
+          <div class="nav-title">Opções avançadas</div>
+          <div class="nav-sub">apagar tudo, etc.</div>
+        </div>
+        <div class="nav-arrow">›</div>
+      </button>
     </div>
-    <div class="form-card">
-      <div class="form-row models">
-        <div class="field">
-          <label for="modelNameInput">Nome do relicário</label>
-          <input id="modelNameInput" type="text" placeholder="Ex: Relicário coração dourado" maxlength="50">
+  </div>
+
+  <!-- ESTOQUE -->
+  <div class="view" id="stockView">
+    <button class="back-btn" data-nav="homeView">← Voltar</button>
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Estoque de relicários</div>
+        <div class="section-hint" id="modelsHint">0 modelos</div>
+      </div>
+      <div class="form-card">
+        <div class="form-row models">
+          <div class="field">
+            <label for="modelNameInput">Nome do relicário</label>
+            <input id="modelNameInput" type="text" placeholder="Ex: Relicário coração dourado" maxlength="50">
+          </div>
+          <div class="field">
+            <label for="modelPriceInput">Preço (R$)</label>
+            <input id="modelPriceInput" type="number" step="0.01" min="0" placeholder="0,00">
+          </div>
+          <div class="field">
+            <label for="modelQtyInput">Quantidade</label>
+            <input id="modelQtyInput" type="number" step="1" min="1" placeholder="10">
+          </div>
+          <button class="btn btn-primary" id="addModelBtn">Adicionar</button>
         </div>
-        <div class="field">
-          <label for="modelPriceInput">Preço (R$)</label>
-          <input id="modelPriceInput" type="number" step="0.01" min="0" placeholder="0,00">
+      </div>
+      <div class="stock-list" id="stockList"></div>
+    </div>
+  </div>
+
+  <!-- REGISTRAR PEDIDO -->
+  <div class="view" id="orderView">
+    <button class="back-btn" data-nav="homeView">← Voltar</button>
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Registrar pedido</div>
+        <div class="section-hint">tira automaticamente do estoque</div>
+      </div>
+      <div class="form-card">
+        <div class="form-row orders">
+          <div class="field">
+            <label for="buyerInput">Nome de quem pediu</label>
+            <input id="buyerInput" type="text" placeholder="Ex: Maria Silva" maxlength="50">
+          </div>
+          <div class="field">
+            <label for="orderModelSelect">Relicário escolhido</label>
+            <select id="orderModelSelect"></select>
+          </div>
+          <div class="field">
+            <label for="orderQtyInput">Qtd.</label>
+            <input id="orderQtyInput" type="number" step="1" min="1" value="1">
+          </div>
+          <div class="field">
+            <label for="orderPriceInput">Preço (R$)</label>
+            <input id="orderPriceInput" type="number" step="0.01" min="0">
+          </div>
+          <div class="field">
+            <label for="orderPaidSelect">Pagamento</label>
+            <select id="orderPaidSelect">
+              <option value="unpaid">Ainda não pagou</option>
+              <option value="paid">Já pagou</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="addOrderBtn">Registrar</button>
         </div>
-        <div class="field">
-          <label for="modelQtyInput">Quantidade</label>
-          <input id="modelQtyInput" type="number" step="1" min="1" placeholder="10">
-        </div>
-        <button class="btn btn-primary" id="addModelBtn">Adicionar</button>
       </div>
     </div>
-    <div class="stock-list" id="stockList"></div>
   </div>
 
-  <div class="section">
-    <div class="section-head">
-      <div class="section-title">Registrar pedido</div>
-      <div class="section-hint">tira automaticamente do estoque</div>
-    </div>
-    <div class="form-card">
-      <div class="form-row orders">
-        <div class="field">
-          <label for="buyerInput">Nome de quem pediu</label>
-          <input id="buyerInput" type="text" placeholder="Ex: Maria Silva" maxlength="50">
-        </div>
-        <div class="field">
-          <label for="orderModelSelect">Relicário escolhido</label>
-          <select id="orderModelSelect"></select>
-        </div>
-        <div class="field">
-          <label for="orderQtyInput">Qtd.</label>
-          <input id="orderQtyInput" type="number" step="1" min="1" value="1">
-        </div>
-        <div class="field">
-          <label for="orderPriceInput">Preço (R$)</label>
-          <input id="orderPriceInput" type="number" step="0.01" min="0">
-        </div>
-        <div class="field">
-          <label for="orderPaidSelect">Pagamento</label>
-          <select id="orderPaidSelect">
-            <option value="unpaid">Ainda não pagou</option>
-            <option value="paid">Já pagou</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" id="addOrderBtn">Registrar</button>
+  <!-- PEDIDOS -->
+  <div class="view" id="ordersListView">
+    <button class="back-btn" data-nav="homeView">← Voltar</button>
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Pedidos</div>
+        <div class="section-hint" id="ordersHint">0 pedidos</div>
       </div>
+      <div class="list" id="ordersList"></div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-head">
-      <div class="section-title">Pedidos</div>
-      <div class="section-hint" id="ordersHint">0 pedidos</div>
-    </div>
-    <div class="list" id="ordersList"></div>
-  </div>
-
-  <div class="section">
-    <button class="settings-toggle" id="settingsToggle">⚙ Opções avançadas</button>
-    <div class="settings-box" id="settingsBox">
-      <div class="danger-zone">
-        <div class="danger-text">
-          <div class="danger-title">Apagar tudo</div>
-          <div class="danger-sub">Remove todos os modelos de relicário, todo o estoque e todos os pedidos registrados. Não pode ser desfeito.</div>
+  <!-- OPÇÕES -->
+  <div class="view" id="settingsView">
+    <button class="back-btn" data-nav="homeView">← Voltar</button>
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Opções avançadas</div>
+      </div>
+      <div class="settings-box open">
+        <div class="danger-zone">
+          <div class="danger-text">
+            <div class="danger-title">Apagar tudo</div>
+            <div class="danger-sub">Remove todos os modelos de relicário, todo o estoque e todos os pedidos registrados. Não pode ser desfeito.</div>
+          </div>
+          <button class="btn btn-danger" id="resetAllBtn">Apagar tudo</button>
         </div>
-        <button class="btn btn-danger" id="resetAllBtn">Apagar tudo</button>
       </div>
     </div>
   </div>
 
   <div class="footer-note">
-    Feito com carinho para K &amp; B · os dados ficam salvos automaticamente neste dispositivo/artefato.
+    Feito com carinho para a Velora · os dados ficam salvos automaticamente neste dispositivo/artefato.
   </div>
 
 </div>
@@ -302,11 +390,21 @@
     addOrderBtn: document.getElementById('addOrderBtn'),
     ordersHint: document.getElementById('ordersHint'),
     ordersList: document.getElementById('ordersList'),
-    settingsToggle: document.getElementById('settingsToggle'),
-    settingsBox: document.getElementById('settingsBox'),
     resetAllBtn: document.getElementById('resetAllBtn'),
     fullscreenBtn: document.getElementById('fullscreenBtn'),
+    navModelsHint: document.getElementById('navModelsHint'),
+    navOrdersHint: document.getElementById('navOrdersHint'),
   };
+
+  // navegação entre páginas
+  function showView(id){
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('[data-nav]').forEach(btn => {
+    btn.addEventListener('click', () => showView(btn.getAttribute('data-nav')));
+  });
 
   function escapeHtml(str){
     const div = document.createElement('div');
@@ -332,6 +430,7 @@
 
     // stock list
     els.modelsHint.textContent = models.length + (models.length === 1 ? ' modelo' : ' modelos');
+    els.navModelsHint.textContent = totalStock + (totalStock === 1 ? ' peça em estoque' : ' peças em estoque');
     if(models.length === 0){
       els.stockList.innerHTML = '<div class="empty">Nenhum relicário cadastrado ainda. Adicione o primeiro modelo acima.</div>';
     } else {
@@ -368,6 +467,7 @@
 
     // orders list
     els.ordersHint.textContent = orders.length + (orders.length === 1 ? ' pedido' : ' pedidos');
+    els.navOrdersHint.textContent = orders.length + (orders.length === 1 ? ' pedido' : ' pedidos');
     if(orders.length === 0){
       els.ordersList.innerHTML = '<div class="empty">Nenhum pedido registrado ainda.</div>';
     } else {
@@ -398,15 +498,30 @@
     }
   }
 
+  const DEFAULT_MODELS = [
+    { id: uid('m'), name: 'Coração mini Dourado', price: 60, qty: 0 },
+    { id: uid('m'), name: 'Coração mini Prata', price: 60, qty: 0 },
+    { id: uid('m'), name: 'Coração Grande Dourado', price: 77, qty: 0 },
+    { id: uid('m'), name: 'Coração Grande Prata', price: 77, qty: 0 },
+    { id: uid('m'), name: 'Relicário Bíblia Dourado', price: 77.50, qty: 0 },
+  ];
+
   async function loadData(){
+    let hadStoredModels = false;
     try {
       const mRes = await window.storage.get('kb-reliquiarios:models', false);
-      if(mRes && mRes.value) models = JSON.parse(mRes.value);
+      if(mRes && mRes.value){ models = JSON.parse(mRes.value); hadStoredModels = true; }
     } catch(e){ models = []; }
     try {
       const oRes = await window.storage.get('kb-reliquiarios:orders', false);
       if(oRes && oRes.value) orders = JSON.parse(oRes.value);
     } catch(e){ orders = []; }
+
+    if(!hadStoredModels){
+      models = DEFAULT_MODELS;
+      await saveModels();
+    }
+
     render();
   }
 
@@ -517,10 +632,6 @@
     input.addEventListener('keydown', (e) => { if(e.key === 'Enter') els.addOrderBtn.click(); });
   });
 
-  els.settingsToggle.addEventListener('click', () => {
-    els.settingsBox.classList.toggle('open');
-  });
-
   els.resetAllBtn.addEventListener('click', async () => {
     const c1 = confirm('Isso vai apagar todos os modelos, todo o estoque e todos os pedidos. Tem certeza?');
     if(!c1) return;
@@ -531,7 +642,7 @@
     render();
     await saveModels();
     await saveOrders();
-    els.settingsBox.classList.remove('open');
+    showView('homeView');
   });
 
   // fullscreen
