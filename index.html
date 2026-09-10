@@ -371,6 +371,35 @@
   const fmt = (n) => new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(n || 0);
   const uid = (p) => p + Date.now() + Math.floor(Math.random()*1000);
 
+  // Adaptador de armazenamento: usa window.storage quando disponível
+  // (ex.: rodando como Artifact no claude.ai); caso contrário, usa
+  // localStorage do navegador (ex.: arquivo aberto direto ou hospedado
+  // em outro lugar). Isso corrige o caso em que nada era salvo porque
+  // window.storage simplesmente não existia fora do ambiente de Artifacts.
+  const Store = {
+    hasRemote: (typeof window.storage !== 'undefined' && window.storage !== null),
+    async get(key){
+      if(this.hasRemote){
+        try {
+          const res = await window.storage.get(key, false);
+          return (res && typeof res.value === 'string') ? res.value : null;
+        } catch(e){ /* chave não existe ou falhou: cai pro fallback abaixo */ }
+      }
+      try { return localStorage.getItem(key); }
+      catch(e){ console.error('Falha ao ler do localStorage', key, e); return null; }
+    },
+    async set(key, value){
+      let ok = false;
+      if(this.hasRemote){
+        try { await window.storage.set(key, value, false); ok = true; }
+        catch(e){ console.error('Falha ao salvar em window.storage', key, e); }
+      }
+      try { localStorage.setItem(key, value); ok = true; }
+      catch(e){ console.error('Falha ao salvar no localStorage', key, e); }
+      return ok;
+    }
+  };
+
   const els = {
     cardStock: document.getElementById('cardStock'),
     cardOrders: document.getElementById('cardOrders'),
@@ -509,13 +538,13 @@
   async function loadData(){
     let hadStoredModels = false;
     try {
-      const mRes = await window.storage.get('kb-reliquiarios:models', false);
-      if(mRes && mRes.value){ models = JSON.parse(mRes.value); hadStoredModels = true; }
-    } catch(e){ models = []; }
+      const mRaw = await Store.get('kb-reliquiarios:models');
+      if(mRaw){ models = JSON.parse(mRaw); hadStoredModels = true; }
+    } catch(e){ console.error('Falha ao carregar modelos', e); models = []; }
     try {
-      const oRes = await window.storage.get('kb-reliquiarios:orders', false);
-      if(oRes && oRes.value) orders = JSON.parse(oRes.value);
-    } catch(e){ orders = []; }
+      const oRaw = await Store.get('kb-reliquiarios:orders');
+      if(oRaw) orders = JSON.parse(oRaw);
+    } catch(e){ console.error('Falha ao carregar pedidos', e); orders = []; }
 
     if(!hadStoredModels){
       models = DEFAULT_MODELS;
@@ -526,12 +555,12 @@
   }
 
   async function saveModels(){
-    try { await window.storage.set('kb-reliquiarios:models', JSON.stringify(models), false); }
-    catch(e){ console.error('Falha ao salvar modelos', e); }
+    const ok = await Store.set('kb-reliquiarios:models', JSON.stringify(models));
+    if(!ok) console.error('Falha ao salvar modelos: nenhum backend de armazenamento disponível');
   }
   async function saveOrders(){
-    try { await window.storage.set('kb-reliquiarios:orders', JSON.stringify(orders), false); }
-    catch(e){ console.error('Falha ao salvar pedidos', e); }
+    const ok = await Store.set('kb-reliquiarios:orders', JSON.stringify(orders));
+    if(!ok) console.error('Falha ao salvar pedidos: nenhum backend de armazenamento disponível');
   }
 
   // add model
