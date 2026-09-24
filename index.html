@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Velora — Controle de Relicários</title>
+<title>Velora — Controle de Vendas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -180,11 +180,24 @@
   }
   .back-btn:hover{ color: var(--good); }
 
+  .search{ width:100%; background:var(--ink-3); border:1px solid var(--line); border-radius:9px; padding:11px 12px; color:var(--ivory); font:14px 'Inter',sans-serif; outline:none; margin-bottom:14px; }
+  .search:focus{ border-color:var(--gold); }
+  .form-row.item-add{ grid-template-columns: 2fr 0.8fr 1fr auto; margin-top:14px; }
+  .cart{ margin-top:16px; display:flex; flex-direction:column; gap:8px; }
+  .cart-foot{ display:grid; grid-template-columns:1fr 1fr auto; gap:12px; align-items:end; margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+  .cart-total{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:18px; color:var(--gold); padding:8px 0; }
+  .cust-item{ cursor:pointer; transition:border-color .15s; }
+  .cust-item:hover{ border-color:var(--gold); }
+  .link{ cursor:pointer; }
+  .link:hover{ color:var(--gold); }
+  .bar{ height:4px; background:var(--ink-3); border-radius:4px; margin-top:8px; overflow:hidden; }
+  .bar i{ display:block; height:100%; background:var(--gold); }
+  .cust-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
   @media (max-width: 700px){
     .nav-grid{ grid-template-columns: 1fr; }
     .fullscreen-btn{ position: static; display: inline-flex; margin-bottom: 16px; }
     .cards{ grid-template-columns: repeat(2, 1fr); }
-    .form-row.models, .form-row.orders{ grid-template-columns: 1fr; }
+    .form-row.models, .form-row.orders, .form-row.item-add, .cart-foot{ grid-template-columns: 1fr; }
     .danger-zone{ flex-direction: column; align-items: stretch; text-align: left; }
     .item, .stock-item{ flex-direction: column; align-items: flex-start; }
     .item-right, .stock-right{ width: 100%; justify-content: space-between; }
@@ -197,7 +210,7 @@
   <div class="header">
     <button class="fullscreen-btn" id="fullscreenBtn">⤢ Tela cheia</button>
     <div class="monogram">VELORA</div>
-    <h1>Controle de<br>Relicários</h1>
+    <h1>Controle de<br>Vendas</h1>
     <p class="subtitle">Estoque e pedidos das joias do casamento — tudo salvo automaticamente, sem precisar de planilha.</p>
   </div>
 
@@ -207,7 +220,7 @@
       <div class="v" id="cardStock">—</div>
     </div>
     <div class="card">
-      <div class="k">Pedidos feitos</div>
+      <div class="k">Peças vendidas</div>
       <div class="v" id="cardOrders">—</div>
     </div>
     <div class="card good">
@@ -247,6 +260,16 @@
         </div>
         <div class="nav-arrow">›</div>
       </button>
+      <button class="nav-card" data-nav="customersView">
+        <div class="nav-icon">👤</div>
+        <div class="nav-text"><div class="nav-title">Clientes</div><div class="nav-sub" id="navCustHint">0 clientes</div></div>
+        <div class="nav-arrow">›</div>
+      </button>
+      <button class="nav-card" data-nav="salesView">
+        <div class="nav-icon">📊</div>
+        <div class="nav-text"><div class="nav-title">Vendas por peça</div><div class="nav-sub" id="navSalesHint">subtotal de cada modelo</div></div>
+        <div class="nav-arrow">›</div>
+      </button>
       <button class="nav-card" data-nav="settingsView">
         <div class="nav-icon">⚙</div>
         <div class="nav-text">
@@ -263,14 +286,14 @@
     <button class="back-btn" data-nav="homeView">← Voltar</button>
     <div class="section">
       <div class="section-head">
-        <div class="section-title">Estoque de relicários</div>
+        <div class="section-title">Estoque</div>
         <div class="section-hint" id="modelsHint">0 modelos</div>
       </div>
       <div class="form-card">
         <div class="form-row models">
           <div class="field">
-            <label for="modelNameInput">Nome do relicário</label>
-            <input id="modelNameInput" type="text" placeholder="Ex: Relicário coração dourado" maxlength="50">
+            <label for="modelNameInput">Nome da peça</label>
+            <input id="modelNameInput" type="text" placeholder="Ex: Brinco pérola" maxlength="50">
           </div>
           <div class="field">
             <label for="modelPriceInput">Preço (R$)</label>
@@ -296,31 +319,24 @@
         <div class="section-hint">tira automaticamente do estoque</div>
       </div>
       <div class="form-card">
-        <div class="form-row orders">
-          <div class="field">
-            <label for="buyerInput">Nome de quem pediu</label>
-            <input id="buyerInput" type="text" placeholder="Ex: Maria Silva" maxlength="50">
+        <div class="field">
+          <label for="buyerInput">Nome da cliente</label>
+          <input id="buyerInput" type="text" placeholder="Ex: Tami" maxlength="50" list="custList">
+          <datalist id="custList"></datalist>
+        </div>
+        <div class="form-row item-add">
+          <div class="field"><label for="orderModelSelect">Peça</label><select id="orderModelSelect"></select></div>
+          <div class="field"><label for="orderQtyInput">Qtd.</label><input id="orderQtyInput" type="number" step="1" min="1" value="1"></div>
+          <div class="field"><label for="orderPriceInput">Preço (R$)</label><input id="orderPriceInput" type="number" step="0.01" min="0"></div>
+          <button class="btn btn-primary" id="addItemBtn">+ Item</button>
+        </div>
+        <div class="cart" id="cart"></div>
+        <div class="cart-foot">
+          <div class="field"><label>Total do pedido</label><div class="cart-total" id="cartTotal">R$ 0,00</div></div>
+          <div class="field"><label for="orderPaidSelect">Pagamento</label>
+            <select id="orderPaidSelect"><option value="unpaid">Ainda não pagou</option><option value="paid">Já pagou</option></select>
           </div>
-          <div class="field">
-            <label for="orderModelSelect">Relicário escolhido</label>
-            <select id="orderModelSelect"></select>
-          </div>
-          <div class="field">
-            <label for="orderQtyInput">Qtd.</label>
-            <input id="orderQtyInput" type="number" step="1" min="1" value="1">
-          </div>
-          <div class="field">
-            <label for="orderPriceInput">Preço (R$)</label>
-            <input id="orderPriceInput" type="number" step="0.01" min="0">
-          </div>
-          <div class="field">
-            <label for="orderPaidSelect">Pagamento</label>
-            <select id="orderPaidSelect">
-              <option value="unpaid">Ainda não pagou</option>
-              <option value="paid">Já pagou</option>
-            </select>
-          </div>
-          <button class="btn btn-primary" id="addOrderBtn">Registrar</button>
+          <button class="btn btn-primary" id="addOrderBtn" disabled>Registrar pedido</button>
         </div>
       </div>
     </div>
@@ -338,12 +354,57 @@
     </div>
   </div>
 
+  <!-- CLIENTES -->
+  <div class="view" id="customersView">
+    <button class="back-btn" data-nav="homeView">← Voltar</button>
+    <div class="section">
+      <div class="section-head"><div class="section-title">Clientes</div><div class="section-hint" id="customersHint">0 clientes</div></div>
+      <input class="search" id="customerSearch" type="search" placeholder="Buscar cliente...">
+      <div class="list" id="customersList"></div>
+    </div>
+  </div>
+
+  <!-- DETALHE DA CLIENTE -->
+  <div class="view" id="customerView">
+    <button class="back-btn" data-nav="customersView">← Clientes</button>
+    <div class="section">
+      <div class="section-head"><div class="section-title" id="custName"></div><div class="section-hint" id="custHint"></div></div>
+      <div class="cards" id="custCards"></div>
+      <div class="cust-actions">
+        <button class="btn btn-primary" id="custNewOrder">+ Novo pedido</button>
+        <button class="mini-btn" id="custPayAll">Marcar tudo como pago</button>
+      </div>
+      <div class="list" id="custOrders"></div>
+    </div>
+  </div>
+
+  <!-- VENDAS POR PEÇA -->
+  <div class="view" id="salesView">
+    <button class="back-btn" data-nav="homeView">← Voltar</button>
+    <div class="section">
+      <div class="section-head"><div class="section-title">Vendas por peça</div><div class="section-hint" id="salesHint"></div></div>
+      <div class="stock-list" id="salesList" style="margin-top:0"></div>
+    </div>
+  </div>
+
   <!-- OPÇÕES -->
   <div class="view" id="settingsView">
     <button class="back-btn" data-nav="homeView">← Voltar</button>
     <div class="section">
       <div class="section-head">
         <div class="section-title">Opções avançadas</div>
+      </div>
+      <div class="settings-box open" style="margin-bottom:14px">
+        <div class="danger-zone">
+          <div class="danger-text">
+            <div class="danger-title">Backup dos dados</div>
+            <div class="danger-sub">Como não há banco de dados, baixe uma cópia de vez em quando. Você pode restaurar por aqui se algo se perder.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button class="mini-btn" id="exportBtn">Baixar backup</button>
+            <label class="mini-btn" style="cursor:pointer">Restaurar<input id="importFile" type="file" accept=".json" hidden></label>
+          </div>
+        </div>
       </div>
       <div class="settings-box open">
         <div class="danger-zone">
@@ -369,36 +430,10 @@
   let orders = [];   // {id, modelId, modelName, price, qty, buyer, paid, date}
 
   const fmt = (n) => new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(n || 0);
-  const uid = (p) => p + Date.now() + Math.floor(Math.random()*1000);
-
-  // Adaptador de armazenamento: usa window.storage quando disponível
-  // (ex.: rodando como Artifact no claude.ai); caso contrário, usa
-  // localStorage do navegador (ex.: arquivo aberto direto ou hospedado
-  // em outro lugar). Isso corrige o caso em que nada era salvo porque
-  // window.storage simplesmente não existia fora do ambiente de Artifacts.
-  const Store = {
-    hasRemote: (typeof window.storage !== 'undefined' && window.storage !== null),
-    async get(key){
-      if(this.hasRemote){
-        try {
-          const res = await window.storage.get(key, false);
-          return (res && typeof res.value === 'string') ? res.value : null;
-        } catch(e){ /* chave não existe ou falhou: cai pro fallback abaixo */ }
-      }
-      try { return localStorage.getItem(key); }
-      catch(e){ console.error('Falha ao ler do localStorage', key, e); return null; }
-    },
-    async set(key, value){
-      let ok = false;
-      if(this.hasRemote){
-        try { await window.storage.set(key, value, false); ok = true; }
-        catch(e){ console.error('Falha ao salvar em window.storage', key, e); }
-      }
-      try { localStorage.setItem(key, value); ok = true; }
-      catch(e){ console.error('Falha ao salvar no localStorage', key, e); }
-      return ok;
-    }
-  };
+  let _n = 0;
+  const uid = (p) => p + Date.now() + '_' + (++_n) + Math.floor(Math.random()*1000);
+  let cart = [];          // itens do pedido em montagem: {modelId, modelName, qty, price}
+  let currentCust = null; // cliente aberta no detalhe
 
   const els = {
     cardStock: document.getElementById('cardStock'),
@@ -423,6 +458,13 @@
     fullscreenBtn: document.getElementById('fullscreenBtn'),
     navModelsHint: document.getElementById('navModelsHint'),
     navOrdersHint: document.getElementById('navOrdersHint'),
+    addItemBtn: document.getElementById('addItemBtn'), cart: document.getElementById('cart'), cartTotal: document.getElementById('cartTotal'),
+    custList: document.getElementById('custList'), customerSearch: document.getElementById('customerSearch'),
+    customersList: document.getElementById('customersList'), customersHint: document.getElementById('customersHint'),
+    custName: document.getElementById('custName'), custHint: document.getElementById('custHint'), custCards: document.getElementById('custCards'),
+    custOrders: document.getElementById('custOrders'), custNewOrder: document.getElementById('custNewOrder'), custPayAll: document.getElementById('custPayAll'),
+    salesList: document.getElementById('salesList'), salesHint: document.getElementById('salesHint'),
+    exportBtn: document.getElementById('exportBtn'), importFile: document.getElementById('importFile'),
   };
 
   // navegação entre páginas
@@ -461,7 +503,7 @@
     els.modelsHint.textContent = models.length + (models.length === 1 ? ' modelo' : ' modelos');
     els.navModelsHint.textContent = totalStock + (totalStock === 1 ? ' peça em estoque' : ' peças em estoque');
     if(models.length === 0){
-      els.stockList.innerHTML = '<div class="empty">Nenhum relicário cadastrado ainda. Adicione o primeiro modelo acima.</div>';
+      els.stockList.innerHTML = '<div class="empty">Nenhuma peça cadastrada ainda. Adicione a primeira acima.</div>';
     } else {
       els.stockList.innerHTML = models.map(m => `
         <div class="stock-item" data-id="${m.id}">
@@ -484,15 +526,17 @@
     // order model select
     const availableModels = models.filter(m => m.qty > 0);
     if(availableModels.length === 0){
-      els.orderModelSelect.innerHTML = '<option value="">Nenhum relicário disponível</option>';
-      els.addOrderBtn.disabled = true;
+      els.orderModelSelect.innerHTML = '<option value="">Nenhuma peça disponível</option>';
+      els.addItemBtn.disabled = true;
     } else {
       els.orderModelSelect.innerHTML = availableModels.map(m =>
         `<option value="${m.id}">${escapeHtml(m.name)} (estoque: ${m.qty}) — ${fmt(m.price)}</option>`
       ).join('');
-      els.addOrderBtn.disabled = false;
+      els.addItemBtn.disabled = false;
       syncOrderPriceAndMax();
     }
+
+    renderExtras();
 
     // orders list
     els.ordersHint.textContent = orders.length + (orders.length === 1 ? ' pedido' : ' pedidos');
@@ -504,7 +548,7 @@
       els.ordersList.innerHTML = sorted.map(o => `
         <div class="item" data-id="${o.id}">
           <div class="item-left">
-            <div class="item-buyer">${escapeHtml(o.buyer)}</div>
+            <div class="item-buyer link" data-cust="${ck(o.buyer)}">${escapeHtml(o.buyer)}</div>
             <div class="item-meta">${escapeHtml(o.modelName)} · qtd. ${o.qty} · ${formatDate(o.date)}</div>
           </div>
           <div class="item-right">
@@ -515,6 +559,120 @@
         </div>
       `).join('');
     }
+  }
+
+  const ck = (name) => encodeURIComponent(name.trim().toLowerCase());
+  const escapeAttr = (s) => escapeHtml(s).replace(/"/g, '&quot;');
+
+  function getCustomers(){
+    const map = new Map();
+    orders.forEach(o => {
+      const k = ck(o.buyer);
+      if(!map.has(k)) map.set(k, { key:k, name:o.buyer.trim(), lines:[], pieces:0, total:0, paid:0, last:'' });
+      const c = map.get(k), v = o.price * o.qty;
+      c.lines.push(o); c.pieces += o.qty; c.total += v;
+      if(o.paid) c.paid += v;
+      if(o.date > c.last) c.last = o.date;
+    });
+    return [...map.values()].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }
+
+  const lineHtml = (o) => `
+    <div class="item" data-id="${o.id}">
+      <div class="item-left">
+        <div class="item-buyer">${escapeHtml(o.modelName)}</div>
+        <div class="item-meta">qtd. ${o.qty} × ${fmt(o.price)} · ${formatDate(o.date)}</div>
+      </div>
+      <div class="item-right">
+        <div class="item-price">${fmt(o.price * o.qty)}</div>
+        <button class="badge ${o.paid ? 'paid' : 'unpaid'}" data-toggle="${o.id}">${o.paid ? 'Pago' : 'Não pago'}</button>
+        <button class="icon-btn" data-delorder="${o.id}" title="Remover item">✕</button>
+      </div>
+    </div>`;
+
+  function renderExtras(){ renderCart(); renderCustomers(); renderSales(); }
+
+  function renderCart(){
+    els.cart.innerHTML = cart.length ? cart.map((c,i) => `
+      <div class="item">
+        <div class="item-left">
+          <div class="item-buyer">${escapeHtml(c.modelName)}</div>
+          <div class="item-meta">qtd. ${c.qty} × ${fmt(c.price)}</div>
+        </div>
+        <div class="item-right">
+          <div class="item-price">${fmt(c.qty * c.price)}</div>
+          <button class="icon-btn" data-delcart="${i}" title="Tirar do pedido">✕</button>
+        </div>
+      </div>`).join('') : '<div class="empty">Adicione as peças que ela comprou (pode ser mais de uma).</div>';
+    els.cartTotal.textContent = fmt(cart.reduce((s,c) => s + c.qty * c.price, 0));
+    els.addOrderBtn.disabled = cart.length === 0;
+  }
+
+  function renderCustomers(){
+    const all = getCustomers();
+    els.custList.innerHTML = all.map(c => `<option value="${escapeAttr(c.name)}">`).join('');
+    document.getElementById('navCustHint').textContent = all.length + (all.length === 1 ? ' cliente' : ' clientes');
+    els.customersHint.textContent = all.length + (all.length === 1 ? ' cliente' : ' clientes');
+    const q = els.customerSearch.value.trim().toLowerCase();
+    const list = all.filter(c => c.name.toLowerCase().includes(q));
+    els.customersList.innerHTML = list.length ? list.map(c => {
+      const pend = c.total - c.paid;
+      return `<div class="item cust-item" data-cust="${c.key}">
+        <div class="item-left">
+          <div class="item-buyer">${escapeHtml(c.name)}</div>
+          <div class="item-meta">${c.pieces} ${c.pieces === 1 ? 'peça' : 'peças'} · última compra ${formatDate(c.last)}</div>
+        </div>
+        <div class="item-right">
+          <div class="item-price">${fmt(c.total)}</div>
+          <span class="badge ${pend > 0 ? 'unpaid' : 'paid'}">${pend > 0 ? 'Falta ' + fmt(pend) : 'Quitado'}</span>
+        </div>
+      </div>`;
+    }).join('') : '<div class="empty">Nenhuma cliente encontrada.</div>';
+    renderCustomer();
+  }
+
+  function renderCustomer(){
+    const c = currentCust && getCustomers().find(x => x.key === currentCust);
+    if(!c){
+      if(document.getElementById('customerView').classList.contains('active')) showView('customersView');
+      return;
+    }
+    const pend = c.total - c.paid;
+    els.custName.textContent = c.name;
+    els.custHint.textContent = c.lines.length + (c.lines.length === 1 ? ' item' : ' itens');
+    els.custCards.innerHTML = [['Peças', c.pieces, ''], ['Total', fmt(c.total), ''], ['Já pagou', fmt(c.paid), 'good'], ['A pagar', fmt(pend), 'rest']]
+      .map(([k,v,cl]) => `<div class="card ${cl}"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+    els.custPayAll.style.display = pend > 0 ? '' : 'none';
+    els.custOrders.innerHTML = [...c.lines].sort((a,b) => b.date.localeCompare(a.date)).map(lineHtml).join('');
+  }
+
+  function openCustomer(key){ currentCust = key; renderCustomer(); showView('customerView'); }
+
+  function renderSales(){
+    const map = new Map();
+    orders.forEach(o => {
+      const m = map.get(o.modelId) || { name:o.modelName, qty:0, total:0 };
+      m.qty += o.qty; m.total += o.price * o.qty; map.set(o.modelId, m);
+    });
+    const rows = [...map.entries()].map(([id,r]) => ({ ...r, stock: (models.find(m => m.id === id) || {}).qty }))
+      .sort((a,b) => b.qty - a.qty);
+    const pieces = rows.reduce((s,r) => s + r.qty, 0);
+    const max = rows.length ? rows[0].qty : 1;
+    const hint = pieces + (pieces === 1 ? ' peça vendida' : ' peças vendidas') + ' · ' + fmt(rows.reduce((s,r) => s + r.total, 0));
+    els.salesHint.textContent = hint;
+    document.getElementById('navSalesHint').textContent = pieces + (pieces === 1 ? ' peça vendida' : ' peças vendidas');
+    els.salesList.innerHTML = rows.length ? rows.map(r => `
+      <div class="stock-item">
+        <div class="stock-left" style="flex:1">
+          <div class="stock-name">${escapeHtml(r.name)}</div>
+          <div class="stock-price">${r.stock === undefined ? 'removida do estoque' : 'restam ' + r.stock + ' em estoque'}</div>
+          <div class="bar"><i style="width:${(r.qty / max) * 100}%"></i></div>
+        </div>
+        <div class="stock-right" style="flex-direction:column;align-items:flex-end;gap:2px">
+          <div class="stock-qty ok">${r.qty} vendida${r.qty === 1 ? '' : 's'}</div>
+          <div class="stock-price">${fmt(r.total)}</div>
+        </div>
+      </div>`).join('') : '<div class="empty">Nenhuma venda registrada ainda.</div>';
   }
 
   function syncOrderPriceAndMax(){
@@ -538,13 +696,13 @@
   async function loadData(){
     let hadStoredModels = false;
     try {
-      const mRaw = await Store.get('kb-reliquiarios:models');
-      if(mRaw){ models = JSON.parse(mRaw); hadStoredModels = true; }
-    } catch(e){ console.error('Falha ao carregar modelos', e); models = []; }
+      const mRes = await window.storage.get('kb-reliquiarios:models', false);
+      if(mRes && mRes.value){ models = JSON.parse(mRes.value); hadStoredModels = true; }
+    } catch(e){ models = []; }
     try {
-      const oRaw = await Store.get('kb-reliquiarios:orders');
-      if(oRaw) orders = JSON.parse(oRaw);
-    } catch(e){ console.error('Falha ao carregar pedidos', e); orders = []; }
+      const oRes = await window.storage.get('kb-reliquiarios:orders', false);
+      if(oRes && oRes.value) orders = JSON.parse(oRes.value);
+    } catch(e){ orders = []; }
 
     if(!hadStoredModels){
       models = DEFAULT_MODELS;
@@ -555,12 +713,12 @@
   }
 
   async function saveModels(){
-    const ok = await Store.set('kb-reliquiarios:models', JSON.stringify(models));
-    if(!ok) console.error('Falha ao salvar modelos: nenhum backend de armazenamento disponível');
+    try { await window.storage.set('kb-reliquiarios:models', JSON.stringify(models), false); }
+    catch(e){ console.error('Falha ao salvar modelos', e); }
   }
   async function saveOrders(){
-    const ok = await Store.set('kb-reliquiarios:orders', JSON.stringify(orders));
-    if(!ok) console.error('Falha ao salvar pedidos: nenhum backend de armazenamento disponível');
+    try { await window.storage.set('kb-reliquiarios:orders', JSON.stringify(orders), false); }
+    catch(e){ console.error('Falha ao salvar pedidos', e); }
   }
 
   // add model
@@ -601,39 +759,92 @@
 
   els.orderModelSelect.addEventListener('change', syncOrderPriceAndMax);
 
-  // add order
-  els.addOrderBtn.addEventListener('click', async () => {
-    const buyer = els.buyerInput.value.trim();
-    const modelId = els.orderModelSelect.value;
+  // adicionar item ao pedido (carrinho)
+  els.addItemBtn.addEventListener('click', () => {
+    const model = models.find(m => m.id === els.orderModelSelect.value);
     const qty = parseInt(els.orderQtyInput.value);
     const price = parseFloat(els.orderPriceInput.value);
-    const paid = els.orderPaidSelect.value === 'paid';
-
-    if(!buyer){ els.buyerInput.focus(); return; }
-    const model = models.find(m => m.id === modelId);
-    if(!model){ return; }
+    if(!model) return;
     if(!qty || qty <= 0){ els.orderQtyInput.focus(); return; }
-    if(qty > model.qty){ alert('Não há estoque suficiente desse relicário.'); return; }
     if(isNaN(price) || price < 0){ els.orderPriceInput.focus(); return; }
-
-    model.qty -= qty;
-    orders.push({
-      id: uid('o'),
-      modelId: model.id,
-      modelName: model.name,
-      price, qty, buyer, paid,
-      date: new Date().toISOString().slice(0,10)
-    });
-
-    els.buyerInput.value = '';
+    const inCart = cart.filter(c => c.modelId === model.id).reduce((s,c) => s + c.qty, 0);
+    if(qty + inCart > model.qty){ alert('Não há estoque suficiente dessa peça.'); return; }
+    cart.push({ modelId: model.id, modelName: model.name, qty, price });
     els.orderQtyInput.value = '1';
+    renderCart();
+  });
+  els.cart.addEventListener('click', (e) => {
+    const i = e.target.getAttribute('data-delcart');
+    if(i !== null){ cart.splice(parseInt(i), 1); renderCart(); }
+  });
+
+  // registrar pedido: cada item vira uma linha no nome da mesma cliente
+  els.addOrderBtn.addEventListener('click', async () => {
+    const buyer = els.buyerInput.value.trim();
+    const paid = els.orderPaidSelect.value === 'paid';
+    if(!buyer){ els.buyerInput.focus(); return; }
+    if(!cart.length) return;
+    for(const c of cart){
+      const model = models.find(m => m.id === c.modelId);
+      const need = cart.filter(x => x.modelId === c.modelId).reduce((s,x) => s + x.qty, 0);
+      if(!model || need > model.qty){ alert('Estoque insuficiente para "' + c.modelName + '". Ajuste o pedido.'); return; }
+    }
+    const date = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10);
+    cart.forEach(c => {
+      models.find(m => m.id === c.modelId).qty -= c.qty;
+      orders.push({ id: uid('o'), modelId: c.modelId, modelName: c.modelName, price: c.price, qty: c.qty, buyer, paid, date });
+    });
+    cart = [];
+    els.buyerInput.value = '';
     render();
     await saveModels();
     await saveOrders();
+    openCustomer(ck(buyer));
+  });
+
+  // abrir cliente ao clicar no nome (lista de clientes ou de pedidos)
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-cust]');
+    if(el) openCustomer(el.getAttribute('data-cust'));
+  });
+  els.customerSearch.addEventListener('input', renderCustomers);
+  els.custNewOrder.addEventListener('click', () => {
+    const c = getCustomers().find(x => x.key === currentCust);
+    if(c){ els.buyerInput.value = c.name; showView('orderView'); }
+  });
+  els.custPayAll.addEventListener('click', async () => {
+    if(!confirm('Marcar todos os itens dessa cliente como pagos?')) return;
+    orders.forEach(o => { if(ck(o.buyer) === currentCust) o.paid = true; });
+    render();
+    await saveOrders();
+  });
+
+  // backup manual
+  els.exportBtn.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify({ models, orders }, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'velora-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+  });
+  els.importFile.addEventListener('change', async (e) => {
+    const f = e.target.files[0];
+    if(!f) return;
+    try {
+      const d = JSON.parse(await f.text());
+      if(!Array.isArray(d.models) || !Array.isArray(d.orders)) throw new Error('formato');
+      if(!confirm('Isso substitui os dados atuais pelos do backup. Continuar?')) return;
+      models = d.models; orders = d.orders;
+      render();
+      await saveModels();
+      await saveOrders();
+      alert('Backup restaurado!');
+    } catch(err){ alert('Arquivo de backup inválido.'); }
+    e.target.value = '';
   });
 
   // orders list clicks (toggle paid / delete)
-  els.ordersList.addEventListener('click', async (e) => {
+  const handleOrderClick = async (e) => {
     const toggleId = e.target.getAttribute('data-toggle');
     const delId = e.target.getAttribute('data-delorder');
     if(toggleId){
@@ -652,13 +863,15 @@
         await saveOrders();
       }
     }
-  });
+  };
+  els.ordersList.addEventListener('click', handleOrderClick);
+  els.custOrders.addEventListener('click', handleOrderClick);
 
   [els.modelNameInput, els.modelPriceInput, els.modelQtyInput].forEach(input => {
     input.addEventListener('keydown', (e) => { if(e.key === 'Enter') els.addModelBtn.click(); });
   });
-  [els.buyerInput, els.orderQtyInput, els.orderPriceInput].forEach(input => {
-    input.addEventListener('keydown', (e) => { if(e.key === 'Enter') els.addOrderBtn.click(); });
+  [els.orderQtyInput, els.orderPriceInput].forEach(input => {
+    input.addEventListener('keydown', (e) => { if(e.key === 'Enter') els.addItemBtn.click(); });
   });
 
   els.resetAllBtn.addEventListener('click', async () => {
@@ -668,6 +881,8 @@
     if(!c2) return;
     models = [];
     orders = [];
+    cart = [];
+    currentCust = null;
     render();
     await saveModels();
     await saveOrders();
