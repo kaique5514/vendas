@@ -180,6 +180,9 @@
   }
   .back-btn:hover{ color: var(--good); }
 
+  .banner{ display:none; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; background:rgba(212,175,55,0.08); border:1px solid var(--gold); border-radius:14px; padding:16px 18px; margin-bottom:28px; }
+  .banner-text{ font-size:13.5px; line-height:1.5; max-width:520px; }
+  .banner label.btn{ cursor:pointer; display:inline-block; }
   .search{ width:100%; background:var(--ink-3); border:1px solid var(--line); border-radius:9px; padding:11px 12px; color:var(--ivory); font:14px 'Inter',sans-serif; outline:none; margin-bottom:14px; }
   .search:focus{ border-color:var(--gold); }
   .form-row.item-add{ grid-template-columns: 2fr 0.8fr 1fr auto; margin-top:14px; }
@@ -231,6 +234,11 @@
       <div class="k">A receber</div>
       <div class="v" id="cardPending">—</div>
     </div>
+  </div>
+
+  <div class="banner" id="restoreBanner">
+    <div class="banner-text"><strong>Nenhum pedido salvo aqui ainda.</strong><br>Se você tem o arquivo de backup (.json), carregue para recuperar estoque, clientes e pedidos.</div>
+    <label class="btn btn-primary">Carregar backup<input id="importFile2" type="file" accept=".json,application/json,text/plain" hidden></label>
   </div>
 
   <!-- HOME: navegação -->
@@ -402,7 +410,7 @@
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0">
             <button class="mini-btn" id="exportBtn">Baixar backup</button>
-            <label class="mini-btn" style="cursor:pointer">Restaurar<input id="importFile" type="file" accept=".json" hidden></label>
+            <label class="mini-btn" style="cursor:pointer">Restaurar<input id="importFile" type="file" accept=".json,application/json,text/plain" hidden></label>
           </div>
         </div>
       </div>
@@ -590,7 +598,7 @@
       </div>
     </div>`;
 
-  function renderExtras(){ renderCart(); renderCustomers(); renderSales(); }
+  function renderExtras(){ document.getElementById('restoreBanner').style.display = orders.length ? 'none' : 'flex'; renderCart(); renderCustomers(); renderSales(); }
 
   function renderCart(){
     els.cart.innerHTML = cart.length ? cart.map((c,i) => `
@@ -820,20 +828,31 @@
   });
 
   // backup manual
-  els.exportBtn.addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify({ models, orders }, null, 1)], { type: 'application/json' });
+  els.exportBtn.addEventListener('click', async () => {
+    const name = 'velora-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    const file = new File([JSON.stringify({ models, orders }, null, 1)], name, { type: 'application/json' });
+    // no celular abre o menu de compartilhar (Salvar em Arquivos, Drive, WhatsApp...)
+    if(navigator.canShare && navigator.canShare({ files: [file] })){
+      try { await navigator.share({ files: [file], title: 'Backup Velora' }); return; }
+      catch(err){ if(err && err.name === 'AbortError') return; }
+    }
+    // alternativa: baixa o arquivo direto no aparelho
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'velora-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    a.href = URL.createObjectURL(file);
+    a.download = name;
+    document.body.appendChild(a);
     a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    alert('Backup baixado! Procure o arquivo "' + name + '" na pasta Downloads do aparelho.');
   });
-  els.importFile.addEventListener('change', async (e) => {
+  const handleImport = async (e) => {
     const f = e.target.files[0];
     if(!f) return;
     try {
       const d = JSON.parse(await f.text());
       if(!Array.isArray(d.models) || !Array.isArray(d.orders)) throw new Error('formato');
-      if(!confirm('Isso substitui os dados atuais pelos do backup. Continuar?')) return;
+      if(orders.length && !confirm('Isso substitui os dados atuais pelos do backup. Continuar?')) return;
       models = d.models; orders = d.orders;
       render();
       await saveModels();
@@ -841,7 +860,9 @@
       alert('Backup restaurado!');
     } catch(err){ alert('Arquivo de backup inválido.'); }
     e.target.value = '';
-  });
+  };
+  els.importFile.addEventListener('change', handleImport);
+  document.getElementById('importFile2').addEventListener('change', handleImport);
 
   // orders list clicks (toggle paid / delete)
   const handleOrderClick = async (e) => {
